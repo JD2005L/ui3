@@ -40918,6 +40918,51 @@ function MotionWallManager()
 		loadMWSettings();
 	};
 
+	// Manual motion trigger for testing (callable from console)
+	this.TriggerMotion = function (camId)
+	{
+		if (!isActive)
+		{
+			console.warn("Motion Wall is not active");
+			return;
+		}
+		if (!cameraStates[camId])
+		{
+			console.warn("Camera " + camId + " is not in the current group");
+			return;
+		}
+		console.log("Motion Wall: Manually triggering motion for", camId);
+		onMotionStart(camId);
+	};
+
+	// Manual motion end for testing (callable from console)
+	this.EndMotion = function (camId)
+	{
+		if (!isActive)
+		{
+			console.warn("Motion Wall is not active");
+			return;
+		}
+		if (!cameraStates[camId])
+		{
+			console.warn("Camera " + camId + " is not in the current group");
+			return;
+		}
+		console.log("Motion Wall: Manually ending motion for", camId);
+		onMotionEnd(camId);
+	};
+
+	// Get current state for debugging
+	this.GetState = function ()
+	{
+		return {
+			isActive: isActive,
+			currentGroupId: currentGroupId,
+			cameraStates: cameraStates,
+			settings: mwSettings
+		};
+	};
+
 	this.ToggleMotionWall = function ()
 	{
 		if (isActive)
@@ -40980,6 +41025,11 @@ function MotionWallManager()
 		initializeCameraStates();
 		buildGrid();
 		setupStatusListener();
+
+		// Log cameras in group for debugging
+		var camsInGroup = cameraListLoader.GetGroupCams(currentGroupId);
+		console.log("Motion Wall: Activated for group '" + groupCam.optionDisplay + "' with " + camsInGroup.length + " cameras:", camsInGroup);
+		console.log("Motion Wall: Motion detection checking every 1 second. Watch for 'camconfig response' messages to see what data is available.");
 
 		toaster.Success("Motion Wall activated for group: " + groupCam.optionDisplay);
 	};
