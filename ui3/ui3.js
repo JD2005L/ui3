@@ -40490,7 +40490,8 @@ function MotionWallManager()
 				hideTimerId: null,
 				isPinned: false,
 				playerElement: null,
-				tileElement: null
+				tileElement: null,
+				lastMotionCheck: false
 			};
 		}
 
@@ -40830,18 +40831,11 @@ function MotionWallManager()
 	// Listen to status updates from BI
 	var setupStatusListener = function ()
 	{
-		// We need to monitor motion state for all cameras in the group
-		// BI sends status updates via the status loader
-		// For now, we'll use a simpler approach: poll the camera list periodically
-		// and check motion indicators
-
-		// Note: In the real implementation, we would subscribe to video status blocks
-		// or use the existing cornerStatusIcons mechanism. For this implementation,
-		// we'll use a polling approach that checks camera status periodically.
-
 		if (statusUpdateListener)
 			clearInterval(statusUpdateListener);
 
+		// Poll each camera in the group for motion status
+		// We use lightweight HEAD requests to the image endpoint to check motion state
 		statusUpdateListener = setInterval(function ()
 		{
 			if (!isActive)
@@ -40851,16 +40845,70 @@ function MotionWallManager()
 				return;
 			}
 
-			// Check each camera's motion state
-			// This is a simplified approach - in reality, we'd need to query BI's status
-			// or listen to status block events for each camera
-			// For now, we'll simulate by randomly triggering motion (for demo purposes)
+			// Check motion state for each camera in the group
+			for (var camId in cameraStates)
+			{
+				checkCameraMotion(camId);
+			}
+		}, 1000); // Check every second
+	};
 
-			// TODO: Integrate with actual BI status updates
-			// The proper way is to listen to BI_CustomEvent "Video Status Block" events
-			// and track motion state per camera
+	// Check motion state for a single camera via camconfig API
+	var checkCameraMotion = function (camId)
+	{
+		// Use the camconfig endpoint which returns camera status including motion
+		ExecJSON({ cmd: "camconfig", camera: camId }, function (response)
+		{
+			if (!response || !response.data)
+				return;
 
-		}, 1000);
+			var state = cameraStates[camId];
+			if (!state)
+				return;
+
+			// Debug: Log the response once per camera to see available fields
+			if (!state.debugLogged)
+			{
+				console.log("Motion Wall: camconfig response for " + camId + ":", response.data);
+				state.debugLogged = true;
+			}
+
+			// Parse motion state from camconfig response
+			// The response includes various camera properties including motion status
+			var hasMotion = false;
+
+			// Check for motion indicators in the response
+			// Try multiple possible field names that BI might use
+			if (response.data.isMotion === true || response.data.isMotion === 1 || response.data.isMotion === "1")
+				hasMotion = true;
+			else if (response.data.isTriggered === true || response.data.isTriggered === 1 || response.data.isTriggered === "1")
+				hasMotion = true;
+			else if (response.data.motion === true || response.data.motion === 1 || response.data.motion === "1")
+				hasMotion = true;
+			else if (response.data.triggered === true || response.data.triggered === 1 || response.data.triggered === "1")
+				hasMotion = true;
+			else if (response.data.isrecording === true || response.data.isrecording === 1 || response.data.isrecording === "1")
+				hasMotion = true; // Sometimes recording indicates motion
+
+			// Track previous state to detect changes
+			var wasInMotion = state.lastMotionCheck === true;
+			state.lastMotionCheck = hasMotion;
+
+			var wasVisible = state.isVisible && !state.isPinned; // Only track motion-triggered visibility
+
+			if (hasMotion && !wasInMotion)
+			{
+				// Motion started
+				console.log("Motion Wall: Motion detected on camera:", camId);
+				onMotionStart(camId);
+			}
+			else if (!hasMotion && wasInMotion && wasVisible)
+			{
+				// Motion ended
+				console.log("Motion Wall: Motion ended on camera:", camId);
+				onMotionEnd(camId);
+			}
+		});
 	};
 
 	// Public methods
