@@ -40356,12 +40356,23 @@ function MotionWallManager()
 		excludeGroups: [],
 		streamType: "auto" // "auto", "h264", "mjpeg"
 	};
-	var $container = $("#motionWallContainer");
-	var $toggleBtn = $("#motion_wall_btn");
-	var $settingsBtn = $("#motion_wall_settings_btn");
+	var $container = null;
+	var $toggleBtn = null;
+	var $settingsBtn = null;
 	var $settingsDialog = null;
 	var settingsModal = null;
 	var statusUpdateListener = null;
+
+	// Initialize jQuery elements (called after DOM is ready)
+	var initializeElements = function ()
+	{
+		if (!$container)
+		{
+			$container = $("#motionWallContainer");
+			$toggleBtn = $("#motion_wall_btn");
+			$settingsBtn = $("#motion_wall_settings_btn");
+		}
+	};
 
 	// Load settings from localStorage
 	var loadMWSettings = function ()
@@ -40915,7 +40926,14 @@ function MotionWallManager()
 
 	this.Initialize = function ()
 	{
-		loadMWSettings();
+		try
+		{
+			loadMWSettings();
+		}
+		catch (e)
+		{
+			console.warn("Motion Wall: Failed to load settings during initialization:", e);
+		}
 	};
 
 	// Manual motion trigger for testing (callable from console)
@@ -40965,6 +40983,7 @@ function MotionWallManager()
 
 	this.ToggleMotionWall = function ()
 	{
+		initializeElements();
 		if (isActive)
 			self.Deactivate();
 		else
@@ -40973,6 +40992,7 @@ function MotionWallManager()
 
 	this.Activate = function ()
 	{
+		initializeElements();
 		if (isActive)
 			return;
 
@@ -41036,6 +41056,7 @@ function MotionWallManager()
 
 	this.Deactivate = function ()
 	{
+		initializeElements();
 		if (!isActive)
 			return;
 
@@ -41112,6 +41133,7 @@ function MotionWallManager()
 
 	this.OpenSettings = function ()
 	{
+		initializeElements();
 		$settingsDialog = $("#motionWallSettingsDialog");
 
 		// Populate settings
