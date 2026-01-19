@@ -40354,7 +40354,8 @@ function MotionWallManager()
 	var mwSettings = {
 		lingerSeconds: 10,
 		excludeGroups: [],
-		streamType: "auto" // "auto", "h264", "mjpeg"
+		streamType: "auto", // "auto", "h264", "mjpeg"
+		maxConcurrentCameras: 6 // Limit concurrent streams to avoid server overload
 	};
 	var $container = null;
 	var $toggleBtn = null;
@@ -40746,6 +40747,7 @@ function MotionWallManager()
 		};
 
 		// Add refresh mechanism for JPEG
+		// Use slower refresh rate to avoid overwhelming BI server
 		var refreshCount = 0;
 		var refreshInterval = setInterval(function ()
 		{
@@ -40758,13 +40760,13 @@ function MotionWallManager()
 			}
 
 			refreshCount++;
-			if (refreshCount % 25 === 0) // Log every 5 seconds (25 * 200ms)
+			if (refreshCount % 5 === 0) // Log every 5 seconds (5 * 1000ms)
 			{
 				console.log("Motion Wall: MJPEG refreshing for", camId, "- count:", refreshCount);
 			}
 
 			$img.attr('src', getStreamUrl());
-		}, 200); // Refresh every 200ms
+		}, 1000); // Refresh every 1 second (reduced from 200ms to avoid server overload)
 
 		$img.attr('src', getStreamUrl());
 
@@ -40822,7 +40824,23 @@ function MotionWallManager()
 
 		// Show camera if not visible
 		if (!state.isVisible)
+		{
+			// Check if we're at the concurrent camera limit
+			var visibleCount = 0;
+			for (var id in cameraStates)
+			{
+				if (cameraStates[id].isVisible && !cameraStates[id].isPinned)
+					visibleCount++;
+			}
+
+			if (visibleCount >= mwSettings.maxConcurrentCameras)
+			{
+				console.warn("Motion Wall: Max concurrent cameras (" + mwSettings.maxConcurrentCameras + ") reached. Not showing:", camId);
+				return;
+			}
+
 			showCamera(camId);
+		}
 
 		state.lastMotionTs = Date.now();
 	};
@@ -40867,7 +40885,7 @@ function MotionWallManager()
 			clearInterval(statusUpdateListener);
 
 		// Poll each camera in the group for motion status
-		// We use lightweight HEAD requests to the image endpoint to check motion state
+		// Use longer interval and stagger requests to avoid overwhelming BI server
 		statusUpdateListener = setInterval(function ()
 		{
 			if (!isActive)
@@ -40878,11 +40896,21 @@ function MotionWallManager()
 			}
 
 			// Check motion state for each camera in the group
+			// Stagger the checks to avoid slamming the server
+			var cams = Object.keys(cameraStates);
+			var i = 0;
 			for (var camId in cameraStates)
 			{
-				checkCameraMotion(camId);
+				(function(id, delay) {
+					setTimeout(function() {
+						if (isActive) {
+							checkCameraMotion(id);
+						}
+					}, delay);
+				})(camId, i * 300); // Stagger by 300ms each
+				i++;
 			}
-		}, 1000); // Check every second
+		}, 5000); // Check every 5 seconds instead of 1
 	};
 
 	// Check motion state for a single camera via camconfig API
