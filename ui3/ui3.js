@@ -40730,6 +40730,8 @@ function MotionWallManager()
 	// Helper function to show camera with MJPEG
 	var showCameraMJPEG = function (camId, state, $tile, $videoContainer)
 	{
+		console.log("Motion Wall: Starting MJPEG stream for", camId);
+
 		var $img = $('<img class="motionWallTileImg" />');
 		$img.css({
 			width: '100%',
@@ -40737,21 +40739,40 @@ function MotionWallManager()
 			objectFit: 'contain'
 		});
 
-		// Build MJPEG stream URL
-		var streamUrl = currentServer.remoteBaseURL + "image/" + camId + "?time=" + Date.now() + currentServer.GetAPISessionArg("&");
+		// Build MJPEG stream URL with cache-busting
+		var getStreamUrl = function ()
+		{
+			return currentServer.remoteBaseURL + "image/" + camId + "?q=50&s=100&time=" + Date.now() + currentServer.GetAPISessionArg("&");
+		};
 
 		// Add refresh mechanism for JPEG
+		var refreshCount = 0;
 		var refreshInterval = setInterval(function ()
 		{
-			if (!state.isVisible)
+			var currentState = cameraStates[camId];
+			if (!currentState || !currentState.isVisible || !isActive)
 			{
+				console.log("Motion Wall: Stopping MJPEG refresh for", camId, "- visible:", currentState ? currentState.isVisible : "no state", "active:", isActive);
 				clearInterval(refreshInterval);
 				return;
 			}
-			$img.attr('src', currentServer.remoteBaseURL + "image/" + camId + "?time=" + Date.now() + currentServer.GetAPISessionArg("&"));
+
+			refreshCount++;
+			if (refreshCount % 25 === 0) // Log every 5 seconds (25 * 200ms)
+			{
+				console.log("Motion Wall: MJPEG refreshing for", camId, "- count:", refreshCount);
+			}
+
+			$img.attr('src', getStreamUrl());
 		}, 200); // Refresh every 200ms
 
-		$img.attr('src', streamUrl);
+		$img.attr('src', getStreamUrl());
+
+		$img.on('error', function()
+		{
+			console.warn("Motion Wall: MJPEG image failed to load for", camId);
+		});
+
 		state.refreshInterval = refreshInterval;
 		state.playerElement = $img[0];
 
@@ -40885,11 +40906,13 @@ function MotionWallManager()
 			}
 
 			// Parse motion state from camconfig response
-			// The response includes various camera properties including motion status
+			// NOTE: camconfig returns camera CONFIGURATION, not real-time status
+			// So most fields will be static (enabled, profile, etc)
 			var hasMotion = false;
 
 			// Check for motion indicators in the response
-			// Try multiple possible field names that BI might use
+			// Be very conservative - only check fields that actually indicate motion
+			// NOT "isrecording" which is configuration
 			if (response.data.isMotion === true || response.data.isMotion === 1 || response.data.isMotion === "1")
 				hasMotion = true;
 			else if (response.data.isTriggered === true || response.data.isTriggered === 1 || response.data.isTriggered === "1")
@@ -40898,8 +40921,6 @@ function MotionWallManager()
 				hasMotion = true;
 			else if (response.data.triggered === true || response.data.triggered === 1 || response.data.triggered === "1")
 				hasMotion = true;
-			else if (response.data.isrecording === true || response.data.isrecording === 1 || response.data.isrecording === "1")
-				hasMotion = true; // Sometimes recording indicates motion
 
 			// Track previous state to detect changes
 			var wasInMotion = state.lastMotionCheck === true;
@@ -40910,7 +40931,12 @@ function MotionWallManager()
 			if (hasMotion && !wasInMotion)
 			{
 				// Motion started
-				console.log("Motion Wall: Motion detected on camera:", camId);
+				console.log("Motion Wall: Motion detected on camera:", camId, "- fields checked:", {
+					isMotion: response.data.isMotion,
+					isTriggered: response.data.isTriggered,
+					motion: response.data.motion,
+					triggered: response.data.triggered
+				});
 				onMotionStart(camId);
 			}
 			else if (!hasMotion && wasInMotion && wasVisible)
