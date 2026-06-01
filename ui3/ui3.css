@@ -1,7 +1,7 @@
 :root
 {
 	/* Main / Misc */
-	--main-highlight-color: hsl(245, 38%, 39%);
+	--main-highlight-color: hsl(28, 90%, 48%); /* primary brand color (orange; was purple hsl(245,38%,39%)) */
 	--colorAccent1: rgba(62,125,182,1);
 	--colorAccent2: rgba(160,179,140,1);
 	--panel-bg-color: #0C0C0C;
@@ -22,13 +22,13 @@
 	--audio-loading-color: #E0E000;
 	--audio-error-color: #F00000;
 	--audio-idle-color: var(--button-color);
-	--seek-bar-color: hsl(245, 50%, 70%);
+	--seek-bar-color: hsl(32, 95%, 62%);
 	--slidercb-color: var(--dialog-link-color);
-	--progress-bar-inner-color: hsl(245, 50%, 60%);
+	--progress-bar-inner-color: hsl(30, 90%, 54%);
 	--progress-bar-outer-color: #292e33;
-	--status-bar-inner-color: hsl(245, 40%, 50%);
+	--status-bar-inner-color: hsl(28, 88%, 50%);
 	--topbar-tab-hover-bg-color: rgba(255,255,255,0.15);
-	--system-name-bg-color: #393378;
+	--system-name-bg-color: hsl(28, 85%, 37%);
 	--system-name-hot-hover-bg-color: var(--main-highlight-color);
 	/* Dropdowns, Calendar, SquareButtons */
 	--uicontrol-bg-color: transparent;
@@ -41,9 +41,9 @@
 	--dropdown-item-color: var(--text-color);
 	--dropdown-item-hover-color: var(--text-hover-color);
 	--dropdown-item-active-color: var(--text-active-color);
-	--dropdown-item-blue-color: hsl(245, 71%, 71%);
-	--dropdown-item-blue-hover-color: hsl(245, 81%, 81%);
-	--dropdown-item-blue-active-color: hsl(245, 91%, 91%);
+	--dropdown-item-blue-color: hsl(208, 80%, 66%); /* true blue (was purple) so it stays distinct from the orange brand + golden/red categories */
+	--dropdown-item-blue-hover-color: hsl(208, 85%, 74%);
+	--dropdown-item-blue-active-color: hsl(208, 90%, 82%);
 	--dropdown-item-golden-color: #C8B11C;
 	--dropdown-item-golden-hover-color: #e6cf35;
 	--dropdown-item-golden-active-color: #ffe84e;
@@ -52,35 +52,35 @@
 	--dropdown-item-red-active-color: #ffb944;
 	/* Dialogs */
 	--dialog-bg-color: var(--panel-bg-color);
-	--dialog-border-color: #393378;
+	--dialog-border-color: hsl(28, 65%, 28%);
 	--dialog-color: #bcbcbc;
-	--dialog-titlebar-bg-color: hsl(245, 45%, 34%); /* #36307e */
-	--dialog-titlebar-bottom-border-color: hsl(245, 45%, 17%);
+	--dialog-titlebar-bg-color: hsl(28, 80%, 34%);
+	--dialog-titlebar-bottom-border-color: hsl(28, 80%, 18%);
 	--dialog-titlebar-color: #c6c6c6;
-	--dialog-link-color: #889eff;
+	--dialog-link-color: #7ec0ff;
 	/* Collapsible headings in dialogs */
 	--collapsible-heading-bg-color: var(--panel-bg-color);
 	--collapsible-heading-hover-bg-color: #333333;
 	--collapsible-heading-active-bg-color: #404040;
 	--collapsible-heading-color: #808080;
-	--collapsible-heading-expanded-bg-color: hsl(245, 45%, 34%);
-	--collapsible-heading-expanded-hover-bg-color: hsl(245, 55%, 44%);
-	--collapsible-heading-expanded-active-bg-color: hsl(245, 65%, 54%);
+	--collapsible-heading-expanded-bg-color: hsl(28, 80%, 34%);
+	--collapsible-heading-expanded-hover-bg-color: hsl(28, 85%, 44%);
+	--collapsible-heading-expanded-active-bg-color: hsl(28, 90%, 52%);
 	--collapsible-heading-expanded-color: #cdcdcd;
 	/* Streaming Profile List */
 	--streaming-profile-item-bg-color: #272727;
 	--streaming-profile-item-hover-bg-color: #404040;
 	--streaming-profile-item-ghost-bg-color: rgba(255,255,255,0.1);
 	/* Clip List */
-	--datetile-bg-color: hsl(245, 22%, 29%);
+	--datetile-bg-color: hsl(28, 45%, 27%);
 	--badge-color: var(--main-highlight-color);
-	--badge-hover-color: var(--dropdown-item-blue-color);
+	--badge-hover-color: hsl(30, 95%, 62%);
 	--badge-selected-color: #bad8ff;
 	--timeline-background-color: #000000;
-	--timeline-legend-bg-color: hsl(245, 29%, 22%);
+	--timeline-legend-bg-color: hsl(28, 50%, 24%);
 	--timeline-center-bar-color: hsl(200,100%,50%,75%);
 	/* Context Menus */
-	--context-menu-icon-highlight-color: #796dff;
+	--context-menu-icon-highlight-color: hsl(28, 92%, 52%);
 }
 
 .theme-blue-iris-5:root,
@@ -713,6 +713,60 @@ svg .svg_sidebar
 .sizeSmall #systemname, .sizeSmall .topbar_tab_label
 {
 	font-size: 16px;
+}
+
+/* Relocated top-bar dropdowns: Current Group + Streaming Quality (the side bar that used to host these is eliminated). */
+#layouttop > .topbarDropdown
+{
+	flex: 0 1 auto;
+	margin-top: 0;
+	height: 64px;
+	max-width: 260px;
+	border: none;
+	background-color: transparent;
+	padding: 0 14px;
+}
+
+.sizeMedium #layouttop > .topbarDropdown
+{
+	height: 52px;
+	max-width: 200px;
+	padding: 0 9px;
+}
+
+.sizeSmall #layouttop > .topbarDropdown
+{
+	height: 40px;
+	max-width: 150px;
+	padding: 0 5px;
+}
+
+#layouttop > .topbarDropdown:hover
+{
+	background-color: var(--topbar-tab-hover-bg-color);
+}
+
+#layouttop > .topbarDropdown > .topbarDropdownPrefix
+{
+	flex: 0 0 auto;
+	margin-right: 7px;
+	font-size: 12px;
+	font-weight: bold;
+	letter-spacing: 0.5px;
+	text-transform: uppercase;
+	opacity: 0.5;
+}
+
+.sizeSmall #layouttop > .topbarDropdown > .topbarDropdownPrefix
+{
+	font-size: 10px;
+	margin-right: 4px;
+}
+
+#layouttop > .topbarDropdown > .dropdownArrow
+{
+	padding-right: 0;
+	margin-left: 4px;
 }
 
 .sizeSmaller #systemname

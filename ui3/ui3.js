@@ -1780,7 +1780,8 @@ var defaultSettings =
 		}
 		, {
 			key: "ui3_sidebar_visible_on_live"
-			, value: "1"
+			, value: "0" // Side bar eliminated; Current Group + Streaming Quality moved to the top bar.
+			, Generation: 1 // Force-reset existing installs to the new default.
 			, inputType: "checkbox"
 			, label: 'Show Side Bar<div class="settingDesc">on Live View Tab</div>'
 			, onChange: resized
@@ -1788,7 +1789,8 @@ var defaultSettings =
 		}
 		, {
 			key: "ui3_sidebar_visible_on_clips"
-			, value: "1"
+			, value: "0" // Side bar eliminated.
+			, Generation: 1 // Force-reset existing installs to the new default.
 			, inputType: "checkbox"
 			, label: 'Show Side Bar<div class="settingDesc">on Clips tab</div>'
 			, onChange: resized
@@ -1796,7 +1798,8 @@ var defaultSettings =
 		}
 		, {
 			key: "ui3_show_sidebar_hidden_button"
-			, value: "1"
+			, value: "0" // No reveal-arrow; the side bar is intentionally eliminated.
+			, Generation: 1 // Force-reset existing installs to the new default.
 			, inputType: "checkbox"
 			, label: 'Show Icon when Side Bar Hidden<div class="settingDesc">(icon appears by System Name)</div>'
 			, onChange: HandleSidebarVisibilityChange
@@ -1829,7 +1832,8 @@ var defaultSettings =
 		}
 		, {
 			key: "ui3_status_area_show_timeline"
-			, value: "1"
+			, value: "0" // Status area (Server Status box) hidden on Timeline so the timeline spans full width.
+			, Generation: 1 // Force-reset existing installs to the new default.
 			, inputType: "checkbox"
 			, label: 'Show Status Area<div class="settingDesc">on Timeline tab</div>'
 			, onChange: resized
@@ -22821,6 +22825,13 @@ function ImageRenderer()
 	{
 		if (playbackControls.MouseInSettingsPanel(e))
 			return;
+		// Digital zoom via mouse wheel is disabled on the multi-camera grid/group view (zooming
+		// the whole grid is awkward). It stays active when a single camera is the active view.
+		if (videoPlayer.Loading().image.isGroup)
+		{
+			e.preventDefault();
+			return;
+		}
 		mouseCoordFixer.fix(e);
 		self.SetMousePos(e.mouseX, e.mouseY);
 		e.preventDefault();
@@ -22837,6 +22848,10 @@ function ImageRenderer()
 	var toast;
 	function onPinchStart(e)
 	{
+		// Pinch-zoom is disabled on the multi-camera grid/group view, matching the mouse-wheel
+		// behavior above. It stays active when a single camera is the active view.
+		if (videoPlayer.Loading().image.isGroup)
+			return;
 		if (settings.ui3_browserZoomEnabled !== "1")
 		{
 			pinchZoomState.active = true;
@@ -31543,7 +31558,16 @@ function MaximizedModeController()
 		if (settings.ui3_is_maximized === "1")
 			$("#layoutleft,#layouttop").hide();
 		else
-			$("#layoutleft,#layouttop").show();
+		{
+			$("#layouttop").show();
+			// Don't force the side bar visible on un-maximize: it may be hidden by the
+			// ui3_sidebar_visible_on_* settings. A jQuery .show() writes an inline display that
+			// overrides the .disabledBySetting CSS rule, so the side bar wrongly reappears until a
+			// page reload. Clearing the inline display (set by .hide() when maximizing) lets that
+			// CSS class — re-applied by HandleSidebarVisibilityChange() during the resized() call
+			// in updateMaximizeButtonState() below — govern side bar visibility.
+			$("#layoutleft").css("display", "");
+		}
 		this.updateMaximizeButtonState();
 		clipLoader && clipLoader.RedrawClipList();
 		BI_CustomEvent.Invoke("MaximizeChanged", settings.ui3_is_maximized === "1");
