@@ -834,6 +834,33 @@ svg .svg_sidebar
 	padding: 10px 8px;
 }
 
+#gridZoomToggleBtn
+{
+	width: 26px;
+	height: 26px;
+	padding: 19px 12px;
+}
+
+.sizeMedium #gridZoomToggleBtn
+{
+	width: 22px;
+	height: 22px;
+	padding: 15px 10px;
+}
+
+.sizeSmall #gridZoomToggleBtn
+{
+	width: 18px;
+	height: 18px;
+	padding: 11px 8px;
+}
+
+/* Orange "on" state for the grid-zoom toggle (the ID beats the generic .icon color rules). */
+#gridZoomToggleBtn.gridZoomActive
+{
+	color: var(--main-highlight-color);
+}
+
 #open_alerts_btn
 {
 	width: 16px;

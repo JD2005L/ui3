@@ -3545,6 +3545,10 @@ var defaultSettings =
 			, category: "Digital Zoom"
 		}
 		, {
+			key: "ui3_zoomOnGroupView"
+			, value: "0" // "1" = allow mouse-wheel/pinch digital zoom on the multi-camera grid/group view. Toggled via the top-bar Grid Zoom button. Default off.
+		}
+		, {
 			key: "ui3_alwaysAllow1xVideoZoom"
 			, value: "0"
 			, inputType: "checkbox"
@@ -4291,6 +4295,7 @@ $(function ()
 	OnChange_ui3_topbar_alerts_shortcut_show();
 	OnChange_ui3_topbar_alerts_confirmed_shortcut_show();
 	OnChange_ui3_topbar_alerts_canceled_shortcut_show();
+	UpdateGridZoomToggleButton();
 	OnChange_ui3_skipAmount();
 	OnChange_ui3_pc_next_prev_buttons();
 	OnChange_ui3_pc_seek_buttons();
@@ -6514,6 +6519,19 @@ function setSystemNameButtonTextState()
 		$("#systemname").text(settings.ui3_system_name_button_text_override);
 	else if (sessionManager && sessionManager.sysName)
 		$("#systemname").text(sessionManager.sysName);
+}
+function toggleGridZoom()
+{
+	settings.ui3_zoomOnGroupView = settings.ui3_zoomOnGroupView === "1" ? "0" : "1";
+	UpdateGridZoomToggleButton();
+}
+function UpdateGridZoomToggleButton()
+{
+	var on = settings.ui3_zoomOnGroupView === "1";
+	$("#gridZoomToggleBtn").toggleClass("gridZoomActive", on)
+		.attr("title", on
+			? "Grid Zoom: ON — mouse wheel / pinch zooms the camera grid. Click to turn off (single-camera zoom stays on)."
+			: "Grid Zoom: OFF — wheel / pinch zoom works only on a single camera. Click to enable it on the grid too.");
 }
 function SidebarHiddenButtonClick(e)
 {
@@ -22825,9 +22843,10 @@ function ImageRenderer()
 	{
 		if (playbackControls.MouseInSettingsPanel(e))
 			return;
-		// Digital zoom via mouse wheel is disabled on the multi-camera grid/group view (zooming
-		// the whole grid is awkward). It stays active when a single camera is the active view.
-		if (videoPlayer.Loading().image.isGroup)
+		// Digital zoom via mouse wheel is disabled on the multi-camera grid/group view (zooming the
+		// whole grid is awkward) unless enabled via the top-bar Grid Zoom toggle button
+		// (ui3_zoomOnGroupView). It always stays active when a single camera is the active view.
+		if (settings.ui3_zoomOnGroupView !== "1" && videoPlayer.Loading().image.isGroup)
 		{
 			e.preventDefault();
 			return;
@@ -22849,8 +22868,8 @@ function ImageRenderer()
 	function onPinchStart(e)
 	{
 		// Pinch-zoom is disabled on the multi-camera grid/group view, matching the mouse-wheel
-		// behavior above. It stays active when a single camera is the active view.
-		if (videoPlayer.Loading().image.isGroup)
+		// behavior above (gated by the ui3_zoomOnGroupView top-bar Grid Zoom toggle).
+		if (settings.ui3_zoomOnGroupView !== "1" && videoPlayer.Loading().image.isGroup)
 			return;
 		if (settings.ui3_browserZoomEnabled !== "1")
 		{
