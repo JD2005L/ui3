@@ -1,0 +1,13 @@
+/* ProVisionI local overrides for UI3 (loaded after the main UI3 assets). */
+
+/*
+ * When UI3 is loaded maximized via the URL (?maximize=1 / ?m=1) — the portal's
+ * in-map camera PiP — hide UI3's maximize / un-maximize toggle buttons so that
+ * locked full-bleed overlay can't be un-maximized. The marker class is set by
+ * ui3-local-overrides.js. High specificity + !important so it wins over UI3's
+ * own updateMaximizeButtonState() show/hide logic in every state.
+ */
+html.pvi-locked-maximize #clipMaximizeButton,
+html.pvi-locked-maximize #clipExitMaximizeButton {
+	display: none !important;
+}
