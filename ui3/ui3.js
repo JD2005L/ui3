@@ -6520,6 +6520,38 @@ function setSystemNameButtonTextState()
 	else if (sessionManager && sessionManager.sysName)
 		$("#systemname").text(sessionManager.sysName);
 }
+/**
+ * UI3 is frequently embedded in an iframe (e.g. the ProVisionI portal). Browsers do not chain wheel
+ * scrolling across the iframe boundary, so when UI3 isn't using the wheel itself we forward the
+ * scroll to the parent page. Same-origin parents are scrolled directly; for a cross-origin parent we
+ * postMessage so a cooperating parent can scroll itself. Returns true if embedded (so the caller can
+ * preventDefault), false when running standalone (not in an iframe).
+ */
+function ForwardWheelToParent(e)
+{
+	if (!window.parent || window.parent === window)
+		return false; // not embedded in an iframe
+	var oe = e.originalEvent || e;
+	var mult = 1;
+	if (oe.deltaMode === 1)
+		mult = 16; // DOM_DELTA_LINE -> approx pixels
+	else if (oe.deltaMode === 2)
+		mult = (window.innerHeight || 800); // DOM_DELTA_PAGE -> approx pixels
+	var dx = (oe.deltaX || 0) * mult;
+	var dy = (oe.deltaY || 0) * mult;
+	try
+	{
+		window.parent.scrollBy(dx, dy); // works when the parent is same-origin
+	}
+	catch (ex)
+	{
+		// Cross-origin parent: can't scroll it directly. Ask it to scroll itself (the parent page
+		// must listen for this message; see the snippet in the UI3 docs).
+		try { window.parent.postMessage({ type: "ui3.scrollParent", deltaX: dx, deltaY: dy }, "*"); }
+		catch (ex2) { }
+	}
+	return true;
+}
 function toggleGridZoom()
 {
 	settings.ui3_zoomOnGroupView = settings.ui3_zoomOnGroupView === "1" ? "0" : "1";
@@ -22848,7 +22880,10 @@ function ImageRenderer()
 		// (ui3_zoomOnGroupView). It always stays active when a single camera is the active view.
 		if (settings.ui3_zoomOnGroupView !== "1" && videoPlayer.Loading().image.isGroup)
 		{
-			e.preventDefault();
+			// Not zooming. UI3 is commonly embedded in an iframe and browsers don't chain wheel
+			// scrolling across the iframe boundary, so forward the scroll to the parent page.
+			if (ForwardWheelToParent(e))
+				e.preventDefault();
 			return;
 		}
 		mouseCoordFixer.fix(e);
