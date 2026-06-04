@@ -1789,8 +1789,8 @@ var defaultSettings =
 		}
 		, {
 			key: "ui3_sidebar_visible_on_clips"
-			, value: "0" // Side bar eliminated.
-			, Generation: 1 // Force-reset existing installs to the new default.
+			, value: "1" // Side bar returns ONLY on the Clips tab so operators can browse/download/export clips. Stays hidden on Live/Timeline.
+			, Generation: 2 // Re-reset existing installs (gen 1 had forced this to "0").
 			, inputType: "checkbox"
 			, label: 'Show Side Bar<div class="settingDesc">on Clips tab</div>'
 			, onChange: resized
